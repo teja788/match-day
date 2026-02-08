@@ -86,15 +86,20 @@ export async function fetchCricketMatch(matchId: string): Promise<Match | null> 
   }
 }
 
-function findScoreForTeam(
+function findAllInningsForTeam(
   teamName: string,
   scores: TeamScore[]
-): TeamScore {
-  // Match score to team using the "inning" field (e.g. "Bengal Inning 1")
-  const match = scores.find(
+): TeamScore[] {
+  return scores.filter(
     (s) => s.inning && s.inning.toLowerCase().startsWith(teamName.toLowerCase())
   );
-  return match || {};
+}
+
+function formatInnings(innings: TeamScore[]): string {
+  if (innings.length === 0) return '-';
+  return innings
+    .map((inn) => `${inn.r}/${inn.w} (${inn.o} ov)`)
+    .join(' & ');
 }
 
 function normalizeCricketMatch(raw: CricAPIMatch): Match {
@@ -105,8 +110,11 @@ function normalizeCricketMatch(raw: CricAPIMatch): Match {
   const teamBName = teams[1] || 'Team B';
 
   // Match scores to correct teams using the inning field
-  const teamAScore = findScoreForTeam(teamAName, score);
-  const teamBScore = findScoreForTeam(teamBName, score);
+  const teamAInnings = findAllInningsForTeam(teamAName, score);
+  const teamBInnings = findAllInningsForTeam(teamBName, score);
+
+  // Use the latest inning for extras (overs, etc.)
+  const latestInning = teamAInnings[teamAInnings.length - 1] || {};
 
   let status = 'upcoming';
   if (raw.matchEnded) status = 'completed';
@@ -129,26 +137,20 @@ function normalizeCricketMatch(raw: CricAPIMatch): Match {
       name: teamAName,
       shortName: abbreviate(teamAName),
       logo: teamAInfo?.img || '',
-      score:
-        teamAScore.r != null
-          ? `${teamAScore.r}/${teamAScore.w} (${teamAScore.o} ov)`
-          : '-',
+      score: formatInnings(teamAInnings),
     },
     teamB: {
       name: teamBName,
       shortName: abbreviate(teamBName),
       logo: teamBInfo?.img || '',
-      score:
-        teamBScore.r != null
-          ? `${teamBScore.r}/${teamBScore.w} (${teamBScore.o} ov)`
-          : '-',
+      score: formatInnings(teamBInnings),
     },
     headline: raw.status || '',
     headlineHi: '',
     startTime: raw.dateTimeGMT || new Date().toISOString(),
     venue: raw.venue || '',
     extras: {
-      overs: teamAScore.o || '',
+      overs: latestInning.o || '',
       runRate: '',
       partnership: '',
     },

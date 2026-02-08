@@ -57,11 +57,17 @@ async function fetchCricketMatch(matchId) {
   }
 }
 
-function findScoreForTeam(teamName, scores) {
-  const match = scores.find(
+function findAllInningsForTeam(teamName, scores) {
+  return scores.filter(
     (s) => s.inning && s.inning.toLowerCase().startsWith(teamName.toLowerCase())
   );
-  return match || {};
+}
+
+function formatInnings(innings) {
+  if (innings.length === 0) return '-';
+  return innings
+    .map((inn) => `${inn.r}/${inn.w} (${inn.o} ov)`)
+    .join(' & ');
 }
 
 function normalizeCricketMatch(raw) {
@@ -72,8 +78,10 @@ function normalizeCricketMatch(raw) {
   const teamBName = teams[1] || 'Team B';
 
   // Match scores to correct teams using the inning field
-  const teamAScore = findScoreForTeam(teamAName, score);
-  const teamBScore = findScoreForTeam(teamBName, score);
+  const teamAInnings = findAllInningsForTeam(teamAName, score);
+  const teamBInnings = findAllInningsForTeam(teamBName, score);
+
+  const latestInning = teamAInnings[teamAInnings.length - 1] || {};
 
   let status = 'upcoming';
   if (raw.matchEnded) status = 'completed';
@@ -96,24 +104,20 @@ function normalizeCricketMatch(raw) {
       name: teamAName,
       shortName: abbreviate(teamAName),
       logo: teamAInfo?.img || '',
-      score: teamAScore.r != null
-        ? `${teamAScore.r}/${teamAScore.w} (${teamAScore.o} ov)`
-        : '-',
+      score: formatInnings(teamAInnings),
     },
     teamB: {
       name: teamBName,
       shortName: abbreviate(teamBName),
       logo: teamBInfo?.img || '',
-      score: teamBScore.r != null
-        ? `${teamBScore.r}/${teamBScore.w} (${teamBScore.o} ov)`
-        : '-',
+      score: formatInnings(teamBInnings),
     },
     headline: raw.status || '',
     headlineHi: '',
     startTime: raw.dateTimeGMT || new Date().toISOString(),
     venue: raw.venue || '',
     extras: {
-      overs: teamAScore.o || '',
+      overs: latestInning.o || '',
       runRate: '',
       partnership: '',
     },
