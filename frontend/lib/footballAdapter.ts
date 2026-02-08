@@ -36,7 +36,7 @@ export async function fetchFootballMatches(): Promise<Match[]> {
           'x-rapidapi-key': RAPIDAPI_KEY,
           'x-rapidapi-host': 'api-football-v1.p.rapidapi.com',
         },
-        next: { revalidate: 30 },
+        cache: 'no-store',
       }
     );
     const data = await res.json();
@@ -68,7 +68,7 @@ export async function fetchFootballMatch(fixtureId: string): Promise<Match | nul
           'x-rapidapi-key': RAPIDAPI_KEY,
           'x-rapidapi-host': 'api-football-v1.p.rapidapi.com',
         },
-        next: { revalidate: 15 },
+        cache: 'no-store',
       }
     );
     const data = await res.json();

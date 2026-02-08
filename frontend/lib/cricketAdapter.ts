@@ -46,7 +46,7 @@ export async function fetchCricketMatches(): Promise<Match[]> {
   try {
     const res = await fetch(
       `${CRIC_API_BASE}/currentMatches?apikey=${API_KEY}&offset=0`,
-      { next: { revalidate: 30 } }
+      { cache: 'no-store' }
     );
     const data = await res.json();
 
@@ -74,7 +74,7 @@ export async function fetchCricketMatch(matchId: string): Promise<Match | null> 
   try {
     const res = await fetch(
       `${CRIC_API_BASE}/match_info?apikey=${API_KEY}&id=${matchId}`,
-      { next: { revalidate: 15 } }
+      { cache: 'no-store' }
     );
     const data = await res.json();
 
