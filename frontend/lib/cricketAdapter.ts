@@ -4,6 +4,7 @@ interface TeamScore {
   r?: number;
   w?: number;
   o?: number;
+  inning?: string;
 }
 
 interface CricAPIMatch {
@@ -17,7 +18,7 @@ interface CricAPIMatch {
   status?: string;
   dateTimeGMT?: string;
   venue?: string;
-  teamInfo?: { img?: string }[];
+  teamInfo?: { name?: string; img?: string }[];
 }
 
 export interface Match {
@@ -85,16 +86,39 @@ export async function fetchCricketMatch(matchId: string): Promise<Match | null> 
   }
 }
 
+function findScoreForTeam(
+  teamName: string,
+  scores: TeamScore[]
+): TeamScore {
+  // Match score to team using the "inning" field (e.g. "Bengal Inning 1")
+  const match = scores.find(
+    (s) => s.inning && s.inning.toLowerCase().startsWith(teamName.toLowerCase())
+  );
+  return match || {};
+}
+
 function normalizeCricketMatch(raw: CricAPIMatch): Match {
   const teams = raw.teams || [];
   const score = raw.score || [];
 
-  const teamAScore = score[0] || {};
-  const teamBScore = score[1] || {};
+  const teamAName = teams[0] || 'Team A';
+  const teamBName = teams[1] || 'Team B';
+
+  // Match scores to correct teams using the inning field
+  const teamAScore = findScoreForTeam(teamAName, score);
+  const teamBScore = findScoreForTeam(teamBName, score);
 
   let status = 'upcoming';
   if (raw.matchEnded) status = 'completed';
   else if (raw.matchStarted) status = 'live';
+
+  // Find logo from teamInfo by matching name
+  const teamAInfo = raw.teamInfo?.find(
+    (t) => t.name && t.name.toLowerCase() === teamAName.toLowerCase()
+  );
+  const teamBInfo = raw.teamInfo?.find(
+    (t) => t.name && t.name.toLowerCase() === teamBName.toLowerCase()
+  );
 
   return {
     id: raw.id,
@@ -102,18 +126,18 @@ function normalizeCricketMatch(raw: CricAPIMatch): Match {
     status,
     tournament: raw.series || raw.name || 'Cricket Match',
     teamA: {
-      name: teams[0] || 'Team A',
-      shortName: abbreviate(teams[0]),
-      logo: raw.teamInfo?.[0]?.img || '',
+      name: teamAName,
+      shortName: abbreviate(teamAName),
+      logo: teamAInfo?.img || '',
       score:
         teamAScore.r != null
           ? `${teamAScore.r}/${teamAScore.w} (${teamAScore.o} ov)`
           : '-',
     },
     teamB: {
-      name: teams[1] || 'Team B',
-      shortName: abbreviate(teams[1]),
-      logo: raw.teamInfo?.[1]?.img || '',
+      name: teamBName,
+      shortName: abbreviate(teamBName),
+      logo: teamBInfo?.img || '',
       score:
         teamBScore.r != null
           ? `${teamBScore.r}/${teamBScore.w} (${teamBScore.o} ov)`
