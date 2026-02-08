@@ -95,28 +95,49 @@ function splitInningsByTeam(
   const b = teamBName.toLowerCase();
   const teamAInnings: TeamScore[] = [];
   const teamBInnings: TeamScore[] = [];
+  const unmatched: TeamScore[] = [];
 
+  // Pass 1: exact matches only
   for (const s of scores) {
     if (!s.inning) continue;
     const inning = s.inning.toLowerCase();
-    // Extract team part before " inning"
     const idx = inning.indexOf(' inning');
     if (idx === -1) continue;
     const teamPart = inning.substring(0, idx);
 
-    // Exact match first
     if (teamPart === a) {
       teamAInnings.push(s);
     } else if (teamPart === b) {
       teamBInnings.push(s);
     } else {
-      // CricAPI quirk: comma-separated like "Mumbai,Karnataka"
-      // Second team after comma is the one batting
-      const parts = teamPart.split(',').map((p) => p.trim());
-      if (parts.some((p) => p === b)) {
-        teamBInnings.push(s);
-      } else if (parts.some((p) => p === a)) {
+      unmatched.push(s);
+    }
+  }
+
+  // Pass 2: comma-separated entries (e.g. "Otago,Wellington Inning 1")
+  // Assign to whichever team doesn't already have that inning number
+  for (const s of unmatched) {
+    const inning = s.inning!.toLowerCase();
+    const numMatch = inning.match(/inning\s+(\d+)/);
+    const inningNum = numMatch ? numMatch[1] : '';
+
+    const aHasIt = teamAInnings.some(
+      (x) => x.inning && x.inning.toLowerCase().includes(`inning ${inningNum}`)
+    );
+    const bHasIt = teamBInnings.some(
+      (x) => x.inning && x.inning.toLowerCase().includes(`inning ${inningNum}`)
+    );
+
+    if (aHasIt && !bHasIt) {
+      teamBInnings.push(s);
+    } else if (bHasIt && !aHasIt) {
+      teamAInnings.push(s);
+    } else {
+      // Fallback: assign to team with fewer innings
+      if (teamAInnings.length <= teamBInnings.length) {
         teamAInnings.push(s);
+      } else {
+        teamBInnings.push(s);
       }
     }
   }

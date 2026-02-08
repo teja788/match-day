@@ -62,7 +62,9 @@ function splitInningsByTeam(teamAName, teamBName, scores) {
   const b = teamBName.toLowerCase();
   const teamAInnings = [];
   const teamBInnings = [];
+  const unmatched = [];
 
+  // Pass 1: exact matches only
   for (const s of scores) {
     if (!s.inning) continue;
     const inning = s.inning.toLowerCase();
@@ -75,11 +77,32 @@ function splitInningsByTeam(teamAName, teamBName, scores) {
     } else if (teamPart === b) {
       teamBInnings.push(s);
     } else {
-      const parts = teamPart.split(',').map((p) => p.trim());
-      if (parts.some((p) => p === b)) {
-        teamBInnings.push(s);
-      } else if (parts.some((p) => p === a)) {
+      unmatched.push(s);
+    }
+  }
+
+  // Pass 2: comma-separated entries — assign by elimination
+  for (const s of unmatched) {
+    const inning = s.inning.toLowerCase();
+    const numMatch = inning.match(/inning\s+(\d+)/);
+    const inningNum = numMatch ? numMatch[1] : '';
+
+    const aHasIt = teamAInnings.some(
+      (x) => x.inning && x.inning.toLowerCase().includes(`inning ${inningNum}`)
+    );
+    const bHasIt = teamBInnings.some(
+      (x) => x.inning && x.inning.toLowerCase().includes(`inning ${inningNum}`)
+    );
+
+    if (aHasIt && !bHasIt) {
+      teamBInnings.push(s);
+    } else if (bHasIt && !aHasIt) {
+      teamAInnings.push(s);
+    } else {
+      if (teamAInnings.length <= teamBInnings.length) {
         teamAInnings.push(s);
+      } else {
+        teamBInnings.push(s);
       }
     }
   }
