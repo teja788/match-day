@@ -85,27 +85,34 @@ export function MatchCard({ match }: { match: Match }) {
 }
 
 function TeamRow({ team, isLive }: { team: Team; isLive: boolean }) {
+  const innings = team.score.split(' & ');
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-start gap-2">
       {team.logo && (
         <img
           src={team.logo}
           alt={team.name}
           width={20}
           height={20}
-          className="w-5 h-5 rounded-full object-cover"
+          className="w-5 h-5 rounded-full object-cover mt-0.5"
         />
       )}
-      <span className="text-sm font-semibold text-white flex-1">
+      <span className="text-sm font-semibold text-white flex-1 mt-0.5">
         {team.shortName || team.name}
       </span>
-      <span
-        className={`text-sm font-bold font-mono ${
-          isLive ? 'text-score' : 'text-gray-300'
-        }`}
-      >
-        {team.score}
-      </span>
+      <div className="text-right">
+        {innings.map((inn, i) => (
+          <div
+            key={i}
+            className={`text-sm font-bold font-mono leading-tight ${
+              isLive ? 'text-score' : 'text-gray-300'
+            } ${i > 0 ? 'text-xs opacity-70' : ''}`}
+          >
+            {inn}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
