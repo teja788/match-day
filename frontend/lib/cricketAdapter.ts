@@ -86,13 +86,42 @@ export async function fetchCricketMatch(matchId: string): Promise<Match | null> 
   }
 }
 
-function findAllInningsForTeam(
-  teamName: string,
+function splitInningsByTeam(
+  teamAName: string,
+  teamBName: string,
   scores: TeamScore[]
-): TeamScore[] {
-  return scores.filter(
-    (s) => s.inning && s.inning.toLowerCase().startsWith(teamName.toLowerCase())
-  );
+): { teamAInnings: TeamScore[]; teamBInnings: TeamScore[] } {
+  const a = teamAName.toLowerCase();
+  const b = teamBName.toLowerCase();
+  const teamAInnings: TeamScore[] = [];
+  const teamBInnings: TeamScore[] = [];
+
+  for (const s of scores) {
+    if (!s.inning) continue;
+    const inning = s.inning.toLowerCase();
+    // Extract team part before " inning"
+    const idx = inning.indexOf(' inning');
+    if (idx === -1) continue;
+    const teamPart = inning.substring(0, idx);
+
+    // Exact match first
+    if (teamPart === a) {
+      teamAInnings.push(s);
+    } else if (teamPart === b) {
+      teamBInnings.push(s);
+    } else {
+      // CricAPI quirk: comma-separated like "Mumbai,Karnataka"
+      // Second team after comma is the one batting
+      const parts = teamPart.split(',').map((p) => p.trim());
+      if (parts.some((p) => p === b)) {
+        teamBInnings.push(s);
+      } else if (parts.some((p) => p === a)) {
+        teamAInnings.push(s);
+      }
+    }
+  }
+
+  return { teamAInnings, teamBInnings };
 }
 
 function formatInnings(innings: TeamScore[]): string {
@@ -110,8 +139,7 @@ function normalizeCricketMatch(raw: CricAPIMatch): Match {
   const teamBName = teams[1] || 'Team B';
 
   // Match scores to correct teams using the inning field
-  const teamAInnings = findAllInningsForTeam(teamAName, score);
-  const teamBInnings = findAllInningsForTeam(teamBName, score);
+  const { teamAInnings, teamBInnings } = splitInningsByTeam(teamAName, teamBName, score);
 
   // Use the latest inning for extras (overs, etc.)
   const latestInning = teamAInnings[teamAInnings.length - 1] || {};

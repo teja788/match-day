@@ -57,10 +57,34 @@ async function fetchCricketMatch(matchId) {
   }
 }
 
-function findAllInningsForTeam(teamName, scores) {
-  return scores.filter(
-    (s) => s.inning && s.inning.toLowerCase().startsWith(teamName.toLowerCase())
-  );
+function splitInningsByTeam(teamAName, teamBName, scores) {
+  const a = teamAName.toLowerCase();
+  const b = teamBName.toLowerCase();
+  const teamAInnings = [];
+  const teamBInnings = [];
+
+  for (const s of scores) {
+    if (!s.inning) continue;
+    const inning = s.inning.toLowerCase();
+    const idx = inning.indexOf(' inning');
+    if (idx === -1) continue;
+    const teamPart = inning.substring(0, idx);
+
+    if (teamPart === a) {
+      teamAInnings.push(s);
+    } else if (teamPart === b) {
+      teamBInnings.push(s);
+    } else {
+      const parts = teamPart.split(',').map((p) => p.trim());
+      if (parts.some((p) => p === b)) {
+        teamBInnings.push(s);
+      } else if (parts.some((p) => p === a)) {
+        teamAInnings.push(s);
+      }
+    }
+  }
+
+  return { teamAInnings, teamBInnings };
 }
 
 function formatInnings(innings) {
@@ -78,8 +102,7 @@ function normalizeCricketMatch(raw) {
   const teamBName = teams[1] || 'Team B';
 
   // Match scores to correct teams using the inning field
-  const teamAInnings = findAllInningsForTeam(teamAName, score);
-  const teamBInnings = findAllInningsForTeam(teamBName, score);
+  const { teamAInnings, teamBInnings } = splitInningsByTeam(teamAName, teamBName, score);
 
   const latestInning = teamAInnings[teamAInnings.length - 1] || {};
 
