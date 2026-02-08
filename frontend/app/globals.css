@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  /* Surface colors */
+  --color-surface: #0F1117;
+  --color-surface-card: #1A1D26;
+  --color-surface-border: #2A2D36;
+  --color-surface-hover: #22252E;
+
+  /* Accent colors */
+  --color-live: #EF4444;
+  --color-cricket: #22C55E;
+  --color-football: #3B82F6;
+  --color-headline: #F59E0B;
+  --color-score: #F9FAFB;
+
+  /* Fonts */
+  --font-display: var(--font-dm-sans);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Animations */
+  --animate-live-pulse: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+body {
+  background: var(--color-surface);
+  color: #ffffff;
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
