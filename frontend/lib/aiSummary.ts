@@ -1,23 +1,12 @@
-import Groq from 'groq-sdk';
 import type { Match } from './cricketAdapter';
-
-let groqClient: Groq | null = null;
-
-function getClient(): Groq | null {
-  if (!groqClient) {
-    const key = process.env.GROQ_API_KEY;
-    if (key && key !== 'your_groq_api_key_here') {
-      groqClient = new Groq({ apiKey: key });
-    }
-  }
-  return groqClient;
-}
+import { getGroqClient } from './aiClient';
+import { canCallGroq, recordGroqCall } from './aiRateLimit';
 
 export async function generateHeadline(
   match: Match
 ): Promise<{ en: string; hi: string } | null> {
-  const client = getClient();
-  if (!client) return null;
+  const client = getGroqClient();
+  if (!client || !canCallGroq()) return null;
 
   const prompt = `You are a sports headline writer. Generate a short, exciting one-line headline (max 15 words) for this live match:
 
@@ -32,6 +21,7 @@ Respond in JSON format:
 Only output the JSON, nothing else.`;
 
   try {
+    recordGroqCall();
     const response = await client.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],

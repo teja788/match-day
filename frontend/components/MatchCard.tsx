@@ -12,6 +12,7 @@ interface Team {
 
 export interface Match {
   id: string;
+  slug: string;
   sport: 'cricket' | 'football';
   status: 'upcoming' | 'live' | 'completed';
   tournament: string;
@@ -34,7 +35,7 @@ export function MatchCard({ match }: { match: Match }) {
 
   return (
     <Link
-      href={`/match/${match.id}`}
+      href={`/${match.sport}/${match.slug}`}
       className={`block bg-surface-card rounded-xl p-4 border transition-all hover:bg-surface-hover hover:border-gray-600 group ${
         isLive ? 'border-live/25' : 'border-surface-border'
       }`}

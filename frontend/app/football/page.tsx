@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { FootballFeed } from './FootballFeed';
+import { getScores } from '@/lib/scoreAggregator';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Live Football Scores — Premier League, La Liga, Champions League | MatchDay',
@@ -15,7 +18,14 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function FootballPage() {
+export default async function FootballPage() {
+  let initialData = null;
+  try {
+    initialData = await getScores('football');
+  } catch {
+    // Will fall back to client-only fetch
+  }
+
   return (
     <main className="min-h-screen bg-surface">
       <Header />
@@ -26,7 +36,7 @@ export default function FootballPage() {
             Premier League — La Liga — Champions League — updated every 30 seconds
           </p>
         </div>
-        <FootballFeed />
+        <FootballFeed initialData={initialData} />
       </div>
     </main>
   );

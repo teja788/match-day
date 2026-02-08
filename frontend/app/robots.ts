@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/api/',
     },
-    sitemap: 'https://matchday.live/sitemap.xml',
+    sitemap: 'https://frontend-one-xi-66.vercel.app/sitemap.xml',
   };
 }

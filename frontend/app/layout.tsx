@@ -15,6 +15,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://frontend-one-xi-66.vercel.app'),
   title: 'MatchDay — Live Cricket & Football Scores',
   description:
     'Real-time cricket and football scores on one screen. T20 World Cup, IPL, Premier League, La Liga — AI-powered match highlights.',
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     description: 'One screen. Two sports. AI-powered highlights.',
     url: 'https://matchday.live',
     siteName: 'MatchDay',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    images: [{ url: '/api/og', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {

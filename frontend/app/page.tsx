@@ -1,7 +1,17 @@
 import { Header } from '@/components/Header';
 import { ScoreFeed } from '@/components/ScoreFeed';
+import { getScores } from '@/lib/scoreAggregator';
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+  let initialData = null;
+  try {
+    initialData = await getScores();
+  } catch {
+    // Will fall back to client-only fetch
+  }
+
   return (
     <main className="min-h-screen bg-surface">
       <Header />
@@ -12,7 +22,7 @@ export default function HomePage() {
             Cricket & Football — AI-powered highlights
           </p>
         </div>
-        <ScoreFeed />
+        <ScoreFeed initialData={initialData} />
       </div>
     </main>
   );

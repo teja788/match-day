@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { CricketFeed } from './CricketFeed';
+import { getScores } from '@/lib/scoreAggregator';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Live Cricket Scores — T20 World Cup, IPL, Test Matches | MatchDay',
@@ -15,7 +18,14 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function CricketPage() {
+export default async function CricketPage() {
+  let initialData = null;
+  try {
+    initialData = await getScores('cricket');
+  } catch {
+    // Will fall back to client-only fetch
+  }
+
   return (
     <main className="min-h-screen bg-surface">
       <Header />
@@ -26,7 +36,7 @@ export default function CricketPage() {
             T20 World Cup — IPL — International — updated every 30 seconds
           </p>
         </div>
-        <CricketFeed />
+        <CricketFeed initialData={initialData} />
       </div>
     </main>
   );

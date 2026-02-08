@@ -1,63 +1,29 @@
-import type { Metadata } from 'next';
-import { fetchMatch } from '@/lib/api';
-import { MatchDetailClient } from './MatchDetailClient';
+import { permanentRedirect, notFound } from 'next/navigation';
+import { getScores, getMatch } from '@/lib/scoreAggregator';
+import { resolveIdToSlug } from '@/lib/slugify';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
-  const { id } = await params;
-  try {
-    const match = await fetchMatch(id);
-    const title = `${match.teamA.name} vs ${match.teamB.name} Live Score — ${match.tournament}`;
-    const desc =
-      match.headline ||
-      `Follow ${match.teamA.name} vs ${match.teamB.name} live.`;
-    return {
-      title,
-      description: desc,
-      openGraph: { title, description: desc },
-    };
-  } catch {
-    return { title: 'Match Score — MatchDay' };
-  }
-}
+export const dynamic = 'force-dynamic';
 
-export default async function MatchPage({
+export default async function LegacyMatchPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  let initialData = null;
-  try {
-    initialData = await fetchMatch(id);
-  } catch {
-    // Will render client-only if server fetch fails
+
+  // Populate slug map
+  await getScores();
+  const slugPath = resolveIdToSlug(id);
+
+  if (slugPath) {
+    permanentRedirect(`/${slugPath}`);
   }
 
-  return (
-    <>
-      {initialData && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'SportsEvent',
-              name: `${initialData.teamA.name} vs ${initialData.teamB.name}`,
-              startDate: initialData.startTime,
-              location: { '@type': 'Place', name: initialData.venue },
-              competitor: [
-                { '@type': 'SportsTeam', name: initialData.teamA.name },
-                { '@type': 'SportsTeam', name: initialData.teamB.name },
-              ],
-            }),
-          }}
-        />
-      )}
-      <MatchDetailClient matchId={id} initialData={initialData} />
-    </>
-  );
+  // Fallback: try to fetch the match and build the slug
+  const match = await getMatch(id);
+  if (match && match.slug) {
+    permanentRedirect(`/${match.sport}/${match.slug}`);
+  }
+
+  notFound();
 }

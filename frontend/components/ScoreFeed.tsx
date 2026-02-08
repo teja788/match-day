@@ -5,10 +5,13 @@ import { useScoreStore } from '@/stores/useScoreStore';
 import { MatchCard } from './MatchCard';
 import { SportFilter } from './SportFilter';
 
-export function ScoreFeed() {
+export function ScoreFeed({ initialData }: { initialData?: unknown }) {
   const { activeSport } = useScoreStore();
   const sportParam = activeSport === 'all' ? undefined : activeSport;
-  const { data, error, isLoading, isValidating } = useLiveScores(sportParam);
+  const { data, error, isLoading, isValidating } = useLiveScores(
+    sportParam,
+    sportParam === undefined ? initialData : undefined,
+  );
 
   return (
     <div>

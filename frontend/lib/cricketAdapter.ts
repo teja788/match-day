@@ -1,5 +1,8 @@
 const CRIC_API_BASE = 'https://api.cricapi.com/v1';
 
+// Last-known-good cache: survives API failures within the same serverless instance
+let lastGoodMatches: Match[] | null = null;
+
 interface TeamScore {
   r?: number;
   w?: number;
@@ -23,8 +26,9 @@ interface CricAPIMatch {
 
 export interface Match {
   id: string;
-  sport: string;
-  status: string;
+  slug: string;
+  sport: 'cricket' | 'football';
+  status: 'upcoming' | 'live' | 'completed';
   tournament: string;
   teamA: { name: string; shortName: string; logo: string; score: string };
   teamB: { name: string; shortName: string; logo: string; score: string };
@@ -34,6 +38,16 @@ export interface Match {
   venue: string;
   extras: Record<string, unknown>;
   lastUpdated: string;
+  summary?: string;
+  summaryHi?: string;
+  winProbability?: {
+    teamA: number;
+    teamB: number;
+    draw?: number;
+    confidence: 'low' | 'medium' | 'high';
+    reasoning: string;
+  };
+  matchPhase?: string;
 }
 
 export async function fetchCricketMatches(): Promise<Match[]> {
@@ -51,15 +65,21 @@ export async function fetchCricketMatches(): Promise<Match[]> {
     const data = await res.json();
 
     if (data.status !== 'success' || !data.data) {
-      return getMockCricketMatches();
+      console.warn('[CricketAdapter] API returned:', data.status, data.reason || '');
+      // Serve last-known-good data if available, otherwise mock
+      return lastGoodMatches || getMockCricketMatches();
     }
 
-    return data.data
+    const matches = data.data
       .filter((m: CricAPIMatch) => m.matchStarted || m.matchEnded)
       .map(normalizeCricketMatch);
+
+    // Persist successful response for fallback
+    lastGoodMatches = matches;
+    return matches;
   } catch (err) {
     console.error('[CricketAdapter] Fetch error:', err);
-    return getMockCricketMatches();
+    return lastGoodMatches || getMockCricketMatches();
   }
 }
 
@@ -165,7 +185,7 @@ function normalizeCricketMatch(raw: CricAPIMatch): Match {
   // Use the latest inning for extras (overs, etc.)
   const latestInning = teamAInnings[teamAInnings.length - 1] || {};
 
-  let status = 'upcoming';
+  let status: 'upcoming' | 'live' | 'completed' = 'upcoming';
   if (raw.matchEnded) status = 'completed';
   else if (raw.matchStarted) status = 'live';
 
@@ -179,6 +199,7 @@ function normalizeCricketMatch(raw: CricAPIMatch): Match {
 
   return {
     id: raw.id,
+    slug: '',
     sport: 'cricket',
     status,
     tournament: raw.series || raw.name || 'Cricket Match',
@@ -224,6 +245,7 @@ function getMockCricketMatches(): Match[] {
   return [
     {
       id: 'cricket-mock-1',
+      slug: '',
       sport: 'cricket',
       status: 'live',
       tournament: 'T20 World Cup 2026',
@@ -238,6 +260,7 @@ function getMockCricketMatches(): Match[] {
     },
     {
       id: 'cricket-mock-2',
+      slug: '',
       sport: 'cricket',
       status: 'live',
       tournament: 'IPL 2026',
@@ -252,6 +275,7 @@ function getMockCricketMatches(): Match[] {
     },
     {
       id: 'cricket-mock-3',
+      slug: '',
       sport: 'cricket',
       status: 'completed',
       tournament: 'T20 World Cup 2026',

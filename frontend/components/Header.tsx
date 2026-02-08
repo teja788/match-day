@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { SearchBar } from './SearchBar';
 
 export function Header() {
   return (
@@ -18,6 +19,7 @@ export function Header() {
           <Link href="/football" className="hover:text-football transition-colors">
             Football
           </Link>
+          <SearchBar />
         </div>
       </div>
     </header>

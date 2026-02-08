@@ -3,8 +3,8 @@
 import { useLiveScores } from '@/lib/swr';
 import { MatchCard } from '@/components/MatchCard';
 
-export function CricketFeed() {
-  const { data, isLoading } = useLiveScores('cricket');
+export function CricketFeed({ initialData }: { initialData?: unknown }) {
+  const { data, isLoading } = useLiveScores('cricket', initialData);
 
   if (isLoading) return <LoadingSkeleton />;
 

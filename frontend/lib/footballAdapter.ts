@@ -88,7 +88,7 @@ function normalizeFootballMatch(raw: FootballFixture): Match {
   const goals = raw.goals || {};
   const score = raw.score || {};
 
-  let status = 'upcoming';
+  let status: 'upcoming' | 'live' | 'completed' = 'upcoming';
   const shortStatus = fixture.status?.short || '';
   const liveStatuses = ['1H', '2H', 'HT', 'ET', 'BT', 'P', 'SUSP', 'INT', 'LIVE'];
   const completedStatuses = ['FT', 'AET', 'PEN', 'AWD', 'WO'];
@@ -98,6 +98,7 @@ function normalizeFootballMatch(raw: FootballFixture): Match {
 
   return {
     id: `football-${fixture.id}`,
+    slug: '',
     sport: 'football',
     status,
     tournament: league.name || 'Football Match',
@@ -147,6 +148,7 @@ function getMockFootballMatches(): Match[] {
   return [
     {
       id: 'football-mock-1',
+      slug: '',
       sport: 'football',
       status: 'live',
       tournament: 'Premier League',
@@ -161,6 +163,7 @@ function getMockFootballMatches(): Match[] {
     },
     {
       id: 'football-mock-2',
+      slug: '',
       sport: 'football',
       status: 'live',
       tournament: 'La Liga',
@@ -175,6 +178,7 @@ function getMockFootballMatches(): Match[] {
     },
     {
       id: 'football-mock-3',
+      slug: '',
       sport: 'football',
       status: 'completed',
       tournament: 'Champions League',
