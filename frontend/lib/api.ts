@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
-const client = axios.create({ baseURL: BASE_URL, timeout: 10000 });
+const client = axios.create({ baseURL: '', timeout: 10000 });
 
 export async function fetchScores(sport?: string) {
   const params: Record<string, string> = {};
